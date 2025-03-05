@@ -347,20 +347,12 @@ proc getGpu*(): string =
     if defined(linux) or defined(bsd):
         let tmpFile = "lspci.txt".toTmpPath
 
-        if execCmd("lspci > " & tmpFile) != 0:
+        if execCmd("glxinfo | grep \"OpenGL renderer string\" > " & tmpFile) != 0:
             logError("Failed to fetch GPU!")
 
-        var vga = "Unknown"
-        let lspci = readFile(tmpFile)
-        for line in lspci.split('\n'):
-            if line.split(' ')[1] == "VGA":
-                vga = line
-                break
+        let glxinfo_string = readFile(tmpFile)
 
-        let vga_parts = vga.split(":")
-
-        if vga_parts.len >= 2 or vga != "Unknown":
-            result = vga_parts[vga_parts.len - 1].split("(")[0].strip()
+        result = glxinfo_string.split(":")[1].split("(")[0].strip()
     elif defined(macosx):
         result = execProcess("system_profiler SPDisplaysDataType | grep 'Chipset Model'").split(": ")[1].split("\n")[0]
     else:
